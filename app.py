@@ -38,9 +38,11 @@ model.to(device)
 
 @app.route('/predict', methods=['POST'])
 def predict():
+    print("Request files:", request.files)  # <-- dodaj tę linię
     if 'file' not in request.files:
         return jsonify({'error': 'No file part'}), 400
     file = request.files['file']
+    print("Filename:", file.filename)
     if file.filename == '':
         return jsonify({'error': 'No selected file'}), 400
     try:
@@ -53,6 +55,7 @@ def predict():
             predicted_class = classes[predicted.item()]
         return jsonify({'class': predicted_class})
     except Exception as e:
+        print("Exception:", e)
         return jsonify({'error': str(e)}), 500
 
 @app.route('/ping', methods=['GET'])
