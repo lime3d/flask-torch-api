@@ -4,6 +4,8 @@ import torch
 from torchvision import models, transforms
 from PIL import Image #PIL.Image — do wczytywania obrazów
 import io #io — do obsługi strumieni bajtów (potrzebne do wczytania pliku obrazka przesłanego przez API)
+import os
+import urllib.request
 
 app = Flask(__name__)
 CORS(app)  # pozwala na żądania z innych domen (np. localhost:3000)
@@ -20,9 +22,17 @@ transform = transforms.Compose([
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+MODEL_URL = 'https://uprawy.faiqkoahkd.cfolks.pl/model.pth'  # <-- podmień na swój URL
+MODEL_PATH = os.path.join(os.path.dirname(__file__), 'model.pth')
+
+if not os.path.exists(MODEL_PATH):
+    print("Pobieram model...")
+    urllib.request.urlretrieve(MODEL_URL, MODEL_PATH)
+    print("Model pobrany.")
+
 model = models.resnet18()
 model.fc = torch.nn.Linear(model.fc.in_features, len(classes))
-model.load_state_dict(torch.load('model.pth', map_location=device))
+model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
 model.eval()
 model.to(device)
 
@@ -51,4 +61,6 @@ def ping():
     return jsonify({"message": "pong"})
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+    import os
+    port = int(os.environ.get("PORT", 5000))
+    app.run(debug=True, host='0.0.0.0', port=port)
